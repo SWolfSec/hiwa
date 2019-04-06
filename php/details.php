@@ -2,17 +2,22 @@
 require 'config.phplib';
 
 $msg="";
-if (!array_key_exists('hiwa-user', $_COOKIE) ||
-    !array_key_exists('hiwa-role', $_COOKIE)) {
+#login via session instead of cookie
+if(isset($_SESSION['user'])){
+	#Allow to page
+}else{
 	Header("Location: login.php");
 	exit();
 }
+
 if (!array_key_exists('orderid', $_REQUEST)) {
 	Header("Location: login.php");
 	exit();
 }
 
-$role=$_COOKIE['hiwa-role'];
+#Update from cookie to session
+$role=$_SESSION['role'];
+
 if (array_key_exists('action', $_REQUEST)) {
 	switch ($_REQUEST['action']) {
 		case 'Add item':
