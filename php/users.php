@@ -2,13 +2,16 @@
 require 'config.phplib';
 
 $msg="";
-if (!array_key_exists('hiwa-user', $_COOKIE) ||
-    !array_key_exists('hiwa-role', $_COOKIE)) {
+#check if session exists
+if(isset($_SESSION['user'])){
+	#Allow to page
+}else{
 	Header("Location: login.php");
 	exit();
 }
+#set role based on session
+$role=$_SESSION['role'];
 
-$role=$_COOKIE['hiwa-role'];
 if ($role != 'admin') Header("Location: menu.php");
 
 if (array_key_exists('action', $_REQUEST) &&
@@ -17,8 +20,11 @@ if (array_key_exists('action', $_REQUEST) &&
 	if ($_REQUEST['user'] != 'guest') {
 		$conn = pg_connect('user='.$CONFIG['username'].
 			' dbname='.$CONFIG['database']);
-		$res = pg_query($conn, "DELETE FROM users WHERE login='".
-			$_REQUEST['user']."'");
+		# -------- Modified to avoid sql injection -------------
+		#pg_query moved to parameterized input using pg_query_params to avoid user input
+        	#directly added to a query string.
+		$res = pg_query_params($conn, "DELETE FROM users WHERE login=$1", array($_REQUEST['user']));
+		
 		if ($res === False) {
 			$msg = "Unable to remove user";
 		} 
@@ -36,11 +42,12 @@ else if (array_key_exists('username', $_REQUEST) &&
 	} else {
 		$conn = pg_connect('user='.$CONFIG['username'].
 			' dbname='.$CONFIG['database']);
-		$res = pg_query($conn, "INSERT INTO USERS
-			(login, password, role) VALUES
-			('".$_REQUEST['username']."', '".
-           		$_REQUEST['password1']."', '".
-			$_REQUEST['role']."')");
+		# -------- Modified to avoid sql injection -------------
+		#pg_query moved to parameterized input using pg_query_params to avoid user input
+       		#directly added to a query string.
+		$res = pg_query_params($conn, "INSERT INTO users (login, password, role) VALUES ($1, $2, $3)", 
+			array($_REQUEST['username'],$_REQUEST['password1'],$_REQUEST['role']));
+		
 		if ($res === False) {
 			$msg="Unable to create user.";
 		}
@@ -56,8 +63,8 @@ else if (array_key_exists('username', $_REQUEST) &&
 
 <body>
 <?php require 'header.php';?>
-<div class="title">HIWA Manage Users</div>
-<div class="subtitle">Logged in as <?php echo $_COOKIE['hiwa-user'];?>
+<div class="title">HIWA Manage Users</div><!--updated to session-->
+<div class="subtitle">Logged in as <?php echo $_SESSION['user'];?>
 	(<?php echo $role; ?>)
 </div>
 
