@@ -2,21 +2,28 @@
 require 'config.phplib';
 
 $msg="";
-if (!array_key_exists('hiwa-user', $_COOKIE) ||
-    !array_key_exists('hiwa-role', $_COOKIE)) {
+#sessions instead of cookies
+if(isset($_SESSION['user'])){
+	#Allow to page
+}else{
 	Header("Location: login.php");
-	exit();
 }
 
-$role=$_COOKIE['hiwa-role'];
+#set role via sessions not cookies
+$role=$_SESSION['role'];
+
+
 
 if (array_key_exists('action', $_REQUEST) &&
     array_key_exists('custid', $_REQUEST) &&
     $_REQUEST['action'] == 'delete') {
 	$conn = pg_connect('user='.$CONFIG['username'].
 		' dbname='.$CONFIG['database']);
-	$res = pg_query($conn, "DELETE FROM customers WHERE 
-		customerid='".$_REQUEST['custid']."'");
+	#-----------Modified to avoid SQL injection -----------------
+	#pg_query moved to parameterized input using pg_query_params to avoid user input
+	#directly added to a query string. 
+	$res = pg_query_params($conn, "DELETE FROM customers WHERE customerid=$1", array($_REQUEST['custid']));
+	
 	if ($res === False) {
 		$msg = "Unable to remove customer";
 	}
@@ -29,13 +36,11 @@ else if (array_key_exists('custid', $_REQUEST) &&
 
 	$conn = pg_connect('user='.$CONFIG['username'].
 		' dbname='.$CONFIG['database']);
-	$res = pg_query($conn, "INSERT INTO customers
-		(customerid, customername, creditlimit, taxid)
-		VALUES
-		('".$_REQUEST['custid']."', '".
-		$_REQUEST['custname']."', ".
-		$_REQUEST['limit'].", '".
-		$_REQUEST['taxid']."')");
+	#-----------Modified to avoid SQL injection -----------------
+	#pg_query moved to parameterized input using pg_query_params to avoid user input
+	#directly added to a query string. 
+	$res = pg_query_params($conn, "INSERT INTO customers (customerid, customername, creditlimit, taxid) VALUES ($1,$2,$3,$4)", 
+		array($_REQUEST['custid'],$_REQUEST['custname'],$_REQUEST['limit'],$_REQUEST['taxid']));
 	if ($res === False) {
 		$msg="Unable to create customer.";
 	}
