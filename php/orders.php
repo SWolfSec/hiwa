@@ -2,13 +2,16 @@
 require 'config.phplib';
 
 $msg="";
-if (!array_key_exists('hiwa-user', $_COOKIE) ||
-    !array_key_exists('hiwa-role', $_COOKIE)) {
+#check if session is set. Redirect if not
+if(isset($_SESSION['user'])){
+	#Allow to page
+}else{
 	Header("Location: login.php");
 	exit();
 }
 
-$role=$_COOKIE['hiwa-role'];
+#Set role based on session
+$role=$_SESSION['role'];
 
 if (array_key_exists('a', $_REQUEST)) {
 $conn = pg_connect("user=".$CONFIG['username']." dbname=".$CONFIG['database']);
