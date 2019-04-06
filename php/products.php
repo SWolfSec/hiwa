@@ -2,21 +2,26 @@
 require 'config.phplib';
 
 $msg="";
-if (!array_key_exists('hiwa-user', $_COOKIE) ||
-    !array_key_exists('hiwa-role', $_COOKIE)) {
+#check for session or redirect
+if(isset($_SESSION['user'])){
+	#Allow to page
+}else{
 	Header("Location: login.php");
 	exit();
 }
-
-$role=$_COOKIE['hiwa-role'];
+#set role based on session
+$role=$_SESSION['role'];
 
 $nextAction = "blank";
 if (array_key_exists('action', $_REQUEST) && array_key_exists('prodid', $_REQUEST)) {
 	if ($_REQUEST['action'] == 'delete') {
 		$conn = pg_connect('user='.$CONFIG['username'].
 			' dbname='.$CONFIG['database']);
-		$res = pg_query($conn, "DELETE FROM products WHERE 
-			productid='".$_REQUEST['prodid']."'");
+		#-----Modified to avoid sql injection-----
+		#pg_query moved to parameterized input using pg_query_params to avoid user input
+        	#directly added to a query string.
+		$res = pg_query_params($conn, "DELETE FROM products WHERE productid=$1", array($_REQUEST['prodid']));
+		
 		if ($res === FALSE) {
 			$msg = "Unable to remove customer";
 		}
@@ -24,8 +29,11 @@ if (array_key_exists('action', $_REQUEST) && array_key_exists('prodid', $_REQUES
 		$nextAction = "update";
 		$conn = pg_connect('user='.$CONFIG['username'].
 			' dbname='.$CONFIG['database']);
-		$res = pg_query("select productid,productname,productdescr,msrp,imageurl from products where productid='".
-			$_REQUEST['prodid']."'");
+		# -----Modified to avoid sql injection-----
+		#pg_query moved to parameterized input using pg_query_params to avoid user input
+        	#directly added to a query string.
+		$res = pg_query_params($conn, "SELECT productid,productname,productdescr,msrp,imageurl from products where productid=$1", 
+			array($_REQUEST['prodid']));
 		$cache = pg_fetch_assoc($res);
 		pg_free_result($res);
 		pg_close($conn);
@@ -33,45 +41,46 @@ if (array_key_exists('action', $_REQUEST) && array_key_exists('prodid', $_REQUES
 } 
 
 if (array_key_exists("a", $_REQUEST)) {
+	
 	if ($_REQUEST['a'] == 'Add Product') {
 		if ($_FILES['prodimg']['tmp_name'] != "") {
-			$imgname=$_FILES['prodimg']['name'];
+			$imgname=$_FILES['prodimg']['tmp_name'];
 			if (mime_content_type($_FILES['prodimg']['tmp_name']) != 'text/x-php')
+			#---------Adding check for hiwa.png for application logo reset ---------
+			#-----------changed $_FILES['prodimg']['name'] to ['tmp_name'] to disallow user naming of the file----
 			copy($_FILES['prodimg']['tmp_name'],
-				$CONFIG['uploads'].'/'.$_FILES['prodimg']['name']);
+				$CONFIG['uploads'].'/'.$_FILES['prodimg']['tmp_name']);
 		} else {
 			$imgname='';
 		}
 			
 		$conn = pg_connect('user='.$CONFIG['username'].
 			' dbname='.$CONFIG['database']);
-		$res = pg_query($conn, "INSERT INTO products
-			(productid, productname, productdescr, msrp, imageurl)
-			VALUES
-			('".$_REQUEST['prodid']."', '".
-			$_REQUEST['prodname']."', ".
-			"'".$_REQUEST['proddesc']."', ".
-			$_REQUEST['msrp'].", ".
-			"'".$imgname."');");
+		#-----Modified to avoid sql injection-----
+		$res = pg_query_params($conn, "INSERT INTO products (productid, productname, productdescr, msrp, imageurl) VALUES ($1,$2,$3,$4,$5)", 
+			array($_REQUEST['prodid'],$_REQUEST['prodname'],$_REQUEST['proddesc'],$_REQUEST['msrp'],$imgname));
+		
+		
 		if ($res === FALSE) {
 			$msg="Unable to create product.";
 		}
 	} elseif ($_REQUEST['a'] == 'Update product') {
 		if ($_FILES['prodimg']['tmp_name'] != "") {
-			$imgname=$_FILES['prodimg']['name'];
+			$imgname=$_FILES['prodimg']['tmp_name'];
+			#---------Adding check for hiwa.png for application logo reset ---------
+			#-----------changed $_FILES['prodimg']['name'] to ['tmp_name'] to disallow user naming of the file-
 			copy($_FILES['prodimg']['tmp_name'],
-				$CONFIG['uploads'].'/'.$_FILES['prodimg']['name']);
+				$CONFIG['uploads'].'/'.$_FILES['prodimg']['tmp_name']);
 		} else {
 			$imgname='';
 		}
 		$conn = pg_connect('user='.$CONFIG['username'].
 			' dbname='.$CONFIG['database']);
-		$res = pg_query($conn, "update products ".
-			"set productname='".$_REQUEST['prodname']."',".
-			"    productdescr='".$_REQUEST['proddesc']."',".
-			"    msrp=".$_REQUEST['msrp'].",".
-			"    imageurl='".$imgname."'".
-			"where productid='".$_REQUEST['prodid']."'");
+
+		#-----Modified to avoid sql injection-----
+		$res = pg_query_params($conn, "UPDATE products set productname=$1,productdescr=$2,msrp=$3,imageurl=$4 WHERE productid=$5", 
+			array($_REQUEST['prodname'],$_REQUEST['proddesc'],$_REQUEST['msrp'],$imgname,$_REQUEST['prodid']));
+		
 		$res = pg_query($conn, "commit;");
 		if ($res === FALSE) {
 			$msg="Unable to update product.";
