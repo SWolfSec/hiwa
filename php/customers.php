@@ -7,6 +7,7 @@ if(isset($_SESSION['user'])){
 	#Allow to page
 }else{
 	Header("Location: login.php");
+	exit();
 }
 
 #set role via sessions not cookies
