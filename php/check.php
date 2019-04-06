@@ -2,13 +2,16 @@
 require 'config.phplib';
 
 $msg="";
-if (!array_key_exists('hiwa-user', $_COOKIE) ||
-    !array_key_exists('hiwa-role', $_COOKIE)) {
+#Updated Cookies to sessions
+if(isset($_SESSION['user'])){
+	#Allow to page
+}else{
 	Header("Location: login.php");
 	exit();
 }
+#set role via session instead of cookie
+$role=$_SESSION['role'];
 
-$role=$_COOKIE['hiwa-role'];
 if ($role != 'admin') Header("Location: menu.php");
 ?>
 <html>
@@ -21,12 +24,23 @@ if ($role != 'admin') Header("Location: menu.php");
 <?php require 'header.php';
 
 if (array_key_exists("ip", $_REQUEST)) {
-	echo "<P>pinging target IP address</P>";
-	exec("ping -c 3 $_REQUEST[ip]", $out);
-	echo "<div><pre>\r\n";
-	echo implode("\r\n", $out)."\r\n";
-	echo "</pre></div>";
+	#Add in a check for valid ip address using the filer_var function
+	if (filter_var($_REQUEST[ip], FILTER_VALIDATE_IP)){
+		echo "<P>Valid IP Address found, pinging target IP address</P>";		
+		#-------------New Execution Fixed------------
+		#By taking the user input $_REQUEST[ip] out of the command and using the escapeshellarg() function it will strip any attempts at
+		#escaping the input
+		#Placed the command into a variable to make it cleaner
+		$command = "ping -c 3".escapeshellarg($_REQUEST[ip]);
+		exec($command, $out);
+		echo "<div><pre>\r\n";
+		echo implode("\r\n", $out)."\r\n";
+		echo "</pre></div>";
+	}else{
+		echo "This is not a valid IP Address. You may only ping no command injection for you.";
+	}
 }
+	
 ?>
 
 <form>
@@ -43,3 +57,5 @@ if (array_key_exists("ip", $_REQUEST)) {
 
 </body>
 </html>
+
+	
