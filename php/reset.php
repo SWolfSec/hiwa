@@ -21,23 +21,22 @@ if (array_key_exists("username", $_POST)) {
 		}
 	}
 
-	$query = "select role from users where login='$_POST[username]'";
 	$conn = pg_connect('user='.$CONFIG['username'].
 		' dbname='.$CONFIG['database']);
-	$res = pg_query($conn, $query);
-	if (pg_num_rows($res) == 1) {
-		print('<P>By continuing this process, you will reset the password of <span style="font-weight:bold">'.
+	#---------Modified to make blind sqli to enumerate users more difficult. -------
+	$res = pg_query_params($conn, "SELECT role FROM users WHERE login=$1", array($_POST[username]));
+	;
+	#--------Removed if statement so that the confirmation will appear regardless of if the user exists or not---------
+	print('<P>By continuing this process, you will reset the password of <span style="font-weight:bold">'.
 			$_POST['username'].'</span>.</p>');
-		print("<p>To continue, check the box and hit the Submit button.</p>");
-		print('<FORM method="post">');
-		print('<input type="hidden" name="username" value="'.$_POST['username'].'">');
-		print('<input type="checkbox" name="confirmed">');
-		print('<input type="submit">');
-		print('</form>');
-		exit();
-	} else {
-		print('Invalid login!');
-	}
+	print("<p>To continue, check the box and hit the Submit button.</p>");
+	print('<FORM method="post">');
+	print('<input type="hidden" name="username" value="'.$_POST['username'].'">');
+	print('<input type="checkbox" name="confirmed">');
+	print('<input type="submit">');
+	print('</form>');
+	exit();
+	
 }
 ?>
 <p>To begin the password reset process, please enter your username in the secure field below.</p>
