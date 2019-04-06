@@ -1,0 +1,43 @@
+--------CHANGELOG--------
+Overall - Updated cookies to now be sessions instead with user and role attributes. Not invulnerable but handles better then
+        Sessions did not work immediately but current updated commits are performing as intended 2019-04-06
+---------------------------------------------------  
+config.phplib - Did not update to avoid overall problems but ideally,
+                Create /var/www/hiwa/images directory for standard images. Keeps user uploaded images separate in the /uploads folder. 
+---------------------------------------------------
+check.php - sanitized input with a filter for IP addresses and also used escape shell args to prevent command injection. 
+            This fixes the mass command injection and disallows users from enumerating local system users. 
+---------------------------------------------------            
+products.php - Updated instances of pg_query to pg_query_params to limit sql injection attacks. This would fix 
+                ordering multiple products without having to pay using the method shown in the first assignment.
+                Naming conventions were fixed for user uploaded images to avoid overwriting hiwa.png and changing the logo. 
+                Now the image will keep its temporary name and not the user supplied name. 
+---------------------------------------------------  
+reset.php - Blind Sql injection to enumerate users. Removed if statements causing descriptive errors. Returns same field regardless
+            of username validity. Updated username check against the database to pg_query_params to further protect from sqli
+---------------------------------------------------  
+users.php - Updated pg_query to pg_query_params to help prevent SQL injection. Parameterized input rather than user input
+            Going directly into the query. 
+---------------------------------------------------  
+login.php - Updated pg_query to pg_query_params to help prevent SQL injection. 
+            The user is checked against the database and the sessions are updated. Updated cookies to now use sessions
+            Session is granted only after a valid user and password are given as input
+            Errors are non-descriptive, usernames or passwords incorrect
+            ADDED updated header to each file to require login and checks role against the session instead of a cookie. 
+---------------------------------------------------  
+orders.php - cookies -> sessions 
+---------------------------------------------------  
+logout.php - No longer wipes cookies but destroys the active session
+---------------------------------------------------  
+menu.php - Changed how roles are set using sessions instead of cookies
+---------------------------------------------------  
+header.php - N/A
+---------------------------------------------------  
+details.php - cookies -> sessions
+---------------------------------------------------  
+customers.php - Updated pg_query to pg_query_params to help prevent SQL injection. 
+---------------------------------------------------  
+about.php - No initial changes
+---------------------------------------------------  
+Future recommendations - Update SQL database to use encryption for user passwords. Design reliable login system and not just 
+                          rely on sessions or cookies. Make directories such as the root hiwa directory not accessible. 
