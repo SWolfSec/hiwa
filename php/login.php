@@ -5,6 +5,7 @@ session_start();
 if (isset($_SESSION['user'])){
 	#loggedin
 	Header("Location: menu.php");
+	exit();
 }else{
 	#not logged in yet check login
 	#set session parameters based on a valid login
@@ -23,6 +24,7 @@ if (isset($_SESSION['user'])){
 			$_SESSION['role'] = $resRole;#set role
 			echo $_SESSION['user'];
 			Header("Location: menu.php");
+			exit();
 		}else{
 			echo "Invalid username or password";
 			session_destroy();
