@@ -1,23 +1,35 @@
 <?php
-if (array_key_exists('login', $_REQUEST) &&
-    array_key_exists('password', $_REQUEST)) {
- 	require 'config.phplib';
-	$conn = pg_connect("user=".$CONFIG['username'].
-	    " dbname=".$CONFIG['database']);
-	$result = pg_query("SELECT * from users
-	    WHERE login='".$_REQUEST['login']."'
-	    AND password='".$_REQUEST['password']."'");
-	$row = pg_fetch_assoc($result);
-	if ($row === False) {
-		require 'header.php';
-		print '<div class="err">Incorrect username/password</div>';
-		exit();
-	}
-	setcookie("hiwa-user", $_REQUEST['login']);
-	setcookie("hiwa-role", $row['role']);
+session_start();
+
+#$_SESSION['user'] = $user_id
+if (isset($_SESSION['user'])){
+	#loggedin
 	Header("Location: menu.php");
-	exit();
+}else{
+	#not logged in yet check login
+	#set session parameters based on a valid login
+	if(isset($_POST['login']) && isset($_POST['password'])){
+		$user = $_REQUEST['login'];
+		$pass = $_REQUEST['password'];
+		require 'config.phplib';
+		$conn = pg_connect("user=".$CONFIG['username'].
+				" dbname=".$CONFIG['database']);
+		#check database with parameterized sql query for user/pass
+		$res = pg_query_params($conn, "SELECT * FROM users WHERE login=$1 AND password=$2", array($_REQUEST['login'],$_REQUEST['password']));
+		if(pg_num_rows($res) == 1){
+			#get users role to persist in the session
+			$resRole = pg_query_params($conn, "SELECT role FROM users WHERE login=$1", array($_REQUEST['login']));
+			$_SESSION['user'] = $user;#set username
+			$_SESSION['role'] = $resRole;#set role
+			echo $_SESSION['user'];
+			Header("Location: menu.php");
+		}else{
+			echo "Invalid username or password";
+			session_destroy();
+		}
+	}
 }
+
 ?>
 
 <html>
